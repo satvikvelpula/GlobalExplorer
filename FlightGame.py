@@ -1,5 +1,3 @@
-### This is the most maintained edition of the game 30.09.2024
-
 from geopy import distance
 import mysql.connector
 
@@ -35,6 +33,37 @@ def get_country_by_icao(icao):
     if result:
         return result[0]
 
+def get_nearby_countries(current_location_icao):
+    current_coords = a_b_distance(current_location_icao)
+
+    if not current_coords:
+        print("Current airport coordinates not found!")
+        return []
+
+    # Query to get airports in other countries
+    query = """
+    SELECT airport.ident, airport.name, airport.latitude_deg, airport.longitude_deg, country.name 
+    FROM airport
+    INNER JOIN country ON airport.iso_country = country.iso_country
+    WHERE airport.ident != %s AND airport.latitude_deg IS NOT NULL AND airport.longitude_deg IS NOT NULL
+    """
+    cursor.execute(query, (current_location_icao,))
+    airports = cursor.fetchall()
+
+    country_distances = {}
+
+    for airport in airports:
+        airport_icao, airport_name, lat, lon, airport_country = airport
+        airport_coords = (lat, lon)
+
+        if airport_country not in country_distances:
+            dist = distance.distance(current_coords, airport_coords).km
+            country_distances[airport_country] = dist
+
+    # Sort the countries by distance and return the top 3 closest
+    sorted_countries = sorted(country_distances.items(), key=lambda x: x[1])
+    return sorted_countries[:3]  # Top 3 closest countries
+
 # Get nearby airports based on distance from the current location
 def get_nearby_airports(current_location_icao, country):
     current_coords = a_b_distance(current_location_icao)
@@ -43,32 +72,41 @@ def get_nearby_airports(current_location_icao, country):
         print("Current airport coordinates not found!")
         return []
 
-    query = f"""
-    SELECT airport.ident, airport.name FROM airport
-    INNER JOIN country ON airport.iso_country = country.iso_country
-    WHERE airport.ident != %s AND airport.latitude_deg IS NOT NULL AND airport.longitude_deg IS NOT NULL AND country.name = '{country}'
-    """
+    country_distances = get_nearby_countries(current_location_icao)
 
-    cursor.execute(query, (current_location_icao,))
-    airports = cursor.fetchall()
+    countries = [country]
+
+    for i in range(len(country_distances)):
+        countries.append(country_distances[i][0])
 
     airport_distances = []
-    #print(airports[0][1])
-    for airport in airports:
-        #print(airport[1])
-        airport_split = airport[1].split()
-        #print(airport_split)
 
-        airport_icao, airport_name = airport
-        airport_coords = a_b_distance(airport_icao)
+    # print(countries)
 
-        if airport_coords:
-            if airport_split[-1] == "Airport":
-                dist = distance.distance(current_coords, airport_coords).km
-                airport_distances.append((airport_icao, airport_name, dist))
+    for i in range(len(countries)):
+        query = f"""
+        SELECT airport.ident, airport.name FROM airport
+        INNER JOIN country ON airport.iso_country = country.iso_country
+        WHERE airport.ident != %s AND airport.latitude_deg IS NOT NULL AND airport.longitude_deg IS NOT NULL AND country.name = '{countries[i]}'
+        """
+
+        cursor.execute(query, (current_location_icao,))
+        airports = cursor.fetchall()
+
+        for airport in airports:
+            airport_split = airport[1].split()
+
+            airport_icao, airport_name = airport
+            airport_coords = a_b_distance(airport_icao)
+
+            if airport_coords:
+                if airport_split[-1] == "Airport":
+                    dist = distance.distance(current_coords, airport_coords).km
+                    airport_distances.append((airport_icao, airport_name, dist))
 
     # Sort by distance and return the 10 closest airports
     airport_distances.sort(key=lambda x: x[2])
+    # print(airport_distances)
     return airport_distances[:10]
 
 # Get goal data
@@ -114,6 +152,11 @@ def play_game():
             if goal[0] not in completed_goals:
                 print(f"- {goal[1]}: {goal[2]}")
 
+        print("\nNearby Countries:")
+        nearby_countries = get_nearby_countries(current_location_icao)
+        for idx, country_info in enumerate(nearby_countries):
+            print(f"{idx + 1}. {country_info[0]} - Distance: {country_info[1]:.2f} km")
+
         # Show nearby airports
         print(f"\nCurrent location ICAO code: {current_location_icao}")
         print("\nNearby Airports:")
@@ -123,7 +166,7 @@ def play_game():
             print(f"{idx + 1}. {airport[1]} ({airport[0]}) - Distance: {airport[2]:.2f} km")
 
         # Get user input
-        choice = input("\nChoose an airport number to fly to (or type 'status' to check status, or type 'goals' to check remaining goals): ")
+        choice = input("\nChoose an airport number to fly to (or type 'status' to check status): ")
 
         if choice.lower() == 'status':
             print(f"\nCurrent Location: {current_location_name} ({current_location_icao})")
