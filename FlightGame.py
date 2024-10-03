@@ -13,7 +13,6 @@ def connect_to_database():
         autocommit=True
     )
 
-
 # Function to get the latitude and longitude of an airport by ICAO code
 def a_b_distance(cursor, icao):
     sql = "SELECT latitude_deg, longitude_deg FROM airport WHERE ident = %s"
@@ -24,7 +23,6 @@ def a_b_distance(cursor, icao):
         return latitude, longitude
     else:
         return None
-
 
 # Function to get the country name and continent code by ICAO code
 def get_country_and_continent(cursor, icao):
@@ -37,7 +35,6 @@ def get_country_and_continent(cursor, icao):
     cursor.execute(sql, (icao,))
     result = cursor.fetchone()
     return result if result else (None, None)
-
 
 # Function to get the nearby countries based on the current airport's location
 def get_nearby_countries(cursor, current_location_icao):
@@ -71,7 +68,6 @@ def get_nearby_countries(cursor, current_location_icao):
     sorted_countries = sorted(country_distances.items(), key=lambda x: x[1][0])
     return sorted_countries  # Return sorted countries by distance
 
-
 # Function to get airports within a selected country, limiting to large/medium airports
 def get_airports_in_country(cursor, country_name):
     query = """
@@ -85,13 +81,11 @@ def get_airports_in_country(cursor, country_name):
     cursor.execute(query, (country_name,))
     return cursor.fetchall()
 
-
 # Function to get goals
 def get_goals(cursor):
     query = "SELECT id, name, description FROM goal"
     cursor.execute(query)
     return cursor.fetchall()
-
 
 # Function to initialize player data
 def initialize_player(cursor, username):
@@ -101,13 +95,11 @@ def initialize_player(cursor, username):
     """
     cursor.execute(query, (username,))
 
-
 # Function to get player data
 def get_player_data(cursor, username):
     query = "SELECT * FROM player WHERE username = %s"
     cursor.execute(query, (username,))
     return cursor.fetchone()
-
 
 # Function to update player data with goals tracking
 def track_goals(player_data, chosen_country, chosen_continent):
@@ -158,14 +150,12 @@ def track_goals(player_data, chosen_country, chosen_continent):
         'flights_remaining': flights_remaining - 1,
     }
 
-
 # Helper function to get the continent of a country by name
 def get_country_continent(cursor, country_name):
     query = "SELECT continent FROM country WHERE name = %s"
     cursor.execute(query, (country_name,))
     result = cursor.fetchone()
     return result[0] if result else None
-
 
 # Function to display player status
 def display_status(player_data):
@@ -180,6 +170,10 @@ def display_status(player_data):
     print(f"Completed goals: {', '.join(completed_goals)}")
     print(f"Flights remaining: {player_data[5]}")
 
+# Function to check if all goals are completed
+def all_goals_completed(player_data, total_goals):
+    completed_goals = json.loads(player_data[2])  # Get completed goals
+    return len(completed_goals) == total_goals  # Check if completed goals match total goals
 
 # Main game logic
 def play_game():
@@ -213,6 +207,9 @@ def play_game():
 
     print(f"Welcome to Airport Explorer: Global Challenge!\n")
     print(f"You are currently at {current_location_name} ({current_location_icao}).")
+
+    # Get total goals count
+    total_goals = len(get_goals(cursor))
 
     while player_data[5] > 0:  # Check flights_remaining
         # Show goals
@@ -288,13 +285,20 @@ def play_game():
 
                 player_data = get_player_data(cursor, username)  # Refresh player data
                 current_location_icao = chosen_airport[0]  # Update current location
+
+                # Check if all goals are completed
+                if all_goals_completed(player_data, total_goals):
+                    print("Congratulations! You've completed all the goals and won the game! You have earned a platinum reward!")
+                    break  # End the game if all goals are completed
+
             except ValueError:
                 print("Invalid input. Please enter a number.")
 
         except ValueError:
             print("Invalid input. Please enter a number.")
 
-    print("Game Over! You've run out of flights.")
+    if player_data[5] == 0:
+        print("Game Over! You've run out of flights.")
 
 
 if __name__ == "__main__":
