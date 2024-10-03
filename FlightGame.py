@@ -2,7 +2,6 @@ from geopy import distance
 import mysql.connector
 import json
 
-
 # Database connection
 def connect_to_database():
     return mysql.connector.connect(
@@ -126,17 +125,23 @@ def track_goals(player_data, chosen_country, chosen_continent):
         visited_airports.append(chosen_country)
 
     # Update completed goals based on the current player status
-    # Count the number of unique countries visited in Europe
+    # Count the number of unique countries visited in Europe and Asia
     unique_countries = set(visited_airports)
 
-    if chosen_continent == 'EU' and len(unique_countries) >= 3:  # Check if 3 unique countries visited
+    european_countries = [country for country in unique_countries if get_country_continent(cursor, country) == 'EU']
+    asian_countries = [country for country in unique_countries if get_country_continent(cursor, country) == 'AS']
+
+    # Check goals for Europe
+    if chosen_continent == 'EU' and len(european_countries) >= 3:
         if "Visit European Airports" not in updated_goals:
             updated_goals.append("Visit European Airports")
 
-    if chosen_continent == 'AS' and len(unique_countries) >= 3:  # Check if 3 unique countries visited
+    # Check goals for Asia (Fix: at least 3 unique Asian countries)
+    if chosen_continent == 'AS' and len(asian_countries) >= 3:
         if "Visit Asian Airports" not in updated_goals:
             updated_goals.append("Visit Asian Airports")
 
+    # Check goals for traveling to multiple continents
     if len(set(continents_visited)) >= 4:
         if "Travel to Different Continents" not in updated_goals:
             updated_goals.append("Travel to Different Continents")
@@ -152,6 +157,14 @@ def track_goals(player_data, chosen_country, chosen_continent):
         'continents_visited': json.dumps(continents_visited),
         'flights_remaining': flights_remaining - 1,
     }
+
+
+# Helper function to get the continent of a country by name
+def get_country_continent(cursor, country_name):
+    query = "SELECT continent FROM country WHERE name = %s"
+    cursor.execute(query, (country_name,))
+    result = cursor.fetchone()
+    return result[0] if result else None
 
 
 # Function to display player status
