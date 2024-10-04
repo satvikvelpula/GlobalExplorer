@@ -271,11 +271,13 @@ def play_game():
         cursor.execute("SELECT ident, name FROM airport WHERE ident = %s", (icao,))
         start_airport = cursor.fetchone()
 
+        print(start_airport)
+
         if not start_airport:
             print(f"Airport with ICAO code {Fore.RED}{icao}{Fore.RESET} not found.")
             time.sleep(0.5)
         else:
-            shouldAskForUsername = False
+            shouldAskForAirport = False
 
     current_location_icao = start_airport[0]
     current_location_name = start_airport[1]
