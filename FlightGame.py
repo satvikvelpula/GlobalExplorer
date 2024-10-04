@@ -175,6 +175,14 @@ def all_goals_completed(player_data, total_goals):
     completed_goals = json.loads(player_data[2])  # Get completed goals
     return len(completed_goals) == total_goals  # Check if completed goals match total goals
 
+# Function to get the last visited airport ICAO code
+def get_last_visited_airport(cursor, username):
+    query = "SELECT last_airport FROM player WHERE username = %s"
+    cursor.execute(query, (username,))
+    result = cursor.fetchone()
+    return result[0] if result else None
+
+
 # Main game logic
 def play_game():
     global cursor
@@ -189,10 +197,10 @@ def play_game():
         # Initialize player data if new player
         initialize_player(cursor, username)
         player_data = get_player_data(cursor, username)
+        icao = input("Give ICAO code (e.g., EFHK for Helsinki Vantaa): ").upper()
     else:
         print(f"Welcome back, {username}! Resuming your game...")
-
-    icao = input("Give ICAO code (e.g., EFHK for Helsinki Vantaa): ").upper()
+        icao = get_last_visited_airport(cursor, username) or input("Give ICAO code (e.g., EFHK for Helsinki Vantaa): ").upper()
 
     # Fetch the airport using the ICAO code
     cursor.execute("SELECT ident, name FROM airport WHERE ident = %s", (icao,))
@@ -240,7 +248,7 @@ def play_game():
 
         try:
             country_choice = int(country_choice) - 1
-            if country_choice < 0 or country_choice >= len(nearby_countries):
+            if country_choice < 0 or country_choice >= 10:
                 print("Invalid country choice. The number is not on the list. Please try again.")
                 continue  # Prompt user again to make a valid selection
 
@@ -283,6 +291,14 @@ def play_game():
                 """, (player_updates['completed_goals'], player_updates['visited_airports'],
                       player_updates['continents_visited'], player_updates['flights_remaining'], username))
 
+                # Update the player's last visited airport here
+                cursor.execute("""
+                    UPDATE player 
+                    SET last_airport = %s 
+                    WHERE username = %s
+                """, (chosen_airport[0], username))
+
+                # Refresh player data to include the updated last airport
                 player_data = get_player_data(cursor, username)  # Refresh player data
                 current_location_icao = chosen_airport[0]  # Update current location
 
@@ -299,6 +315,8 @@ def play_game():
 
     if player_data[5] == 0:
         print("Game Over! You've run out of flights.")
+
+
 
 
 if __name__ == "__main__":
