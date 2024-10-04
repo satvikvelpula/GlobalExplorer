@@ -201,6 +201,8 @@ def display_status(player_data):
 
     print(f"Flights remaining: {Fore.GREEN}{player_data[5]}{Fore.RESET}")
 
+    time.sleep(0.5)
+
 # Function to check if all goals are completed
 def all_goals_completed(player_data, total_goals):
     completed_goals = json.loads(player_data[2])  # Get completed goals
@@ -219,11 +221,19 @@ def play_game():
     conn = connect_to_database()
     cursor = conn.cursor()
 
+    # Get total goals count
+    total_goals = len(get_goals(cursor))
+
     shouldAskForUsername = True
 
     # Manage player account and handle reset or continuation
     while shouldAskForUsername:
         username = input("Enter your username: ")
+
+        if username == "":
+            print(f"{Fore.RED}Username cannot be empty!\n{Fore.RESET}")
+            time.sleep(0.25)
+            continue
 
         player_data = get_player_data(cursor, username)
 
@@ -235,7 +245,7 @@ def play_game():
             print(f"\nWelcome {Fore.GREEN}{username}{Fore.RESET}! Starting a new game...")
             time.sleep(0.5)
             shouldAskForUsername = False
-        else:
+        elif player_data and not all_goals_completed(player_data, total_goals):
             print(f"\nWelcome back, {Fore.GREEN}{username}{Fore.RESET}!")
             time.sleep(0.5)
 
@@ -244,23 +254,36 @@ def play_game():
             while shouldPromptForAction:
                 choice = input(f"\nDo you want to reset your progress or continue? (Enter '{Fore.YELLOW}reset{Fore.RESET}' or '{Fore.YELLOW}continue{Fore.RESET}'): ").lower()
 
-                if choice == 'reset':
-                    confirmation = input(f"Are you sure you want to reset your progress? ({Fore.YELLOW}yes{Fore.RESET}/{Fore.YELLOW}no{Fore.RESET}): ").lower()
-                    if confirmation == 'yes':
-                        delete_player_data(cursor, username)
-                        print("Progress has been reset. Please enter a username.\n")
-                        shouldAskForUsername = True  # Go back to ask for the new username if reset
-                        shouldPromptForAction = False  # Exit inner loop
+                if not all_goals_completed(player_data, total_goals):
+                    if choice == 'reset':
+                        confirmation = input(f"Are you sure you want to reset your progress? ({Fore.YELLOW}yes{Fore.RESET}/{Fore.YELLOW}no{Fore.RESET}): ").lower()
+                        if confirmation == 'yes':
+                            delete_player_data(cursor, username)
+                            print("Progress has been reset. Please enter a username.\n")
+                            shouldAskForUsername = True  # Go back to ask for the new username if reset
+                            shouldPromptForAction = False  # Exit inner loop
+                        else:
+                            print("Reset cancelled.")
+                            continue  # Go back to ask if they want to reset or continue
+                    elif choice == 'continue':
+                        print("Resuming your game...")
+                        time.sleep(0.5)
+                        shouldAskForUsername = False
+                        shouldPromptForAction = False
                     else:
-                        print("Reset cancelled.")
-                        continue  # Go back to ask if they want to reset or continue
-                elif choice == 'continue':
-                    print("Resuming your game...")
-                    time.sleep(0.5)
-                    shouldAskForUsername = False
-                    shouldPromptForAction = False
-                else:
-                    print("Invalid choice. Please enter 'reset' or 'continue'.")
+                        print("Invalid choice. Please enter 'reset' or 'continue'.")
+        else:
+            print("You have already won the game!")
+            choice = input(f"\nDo you want to reset your progress (Enter '{Fore.YELLOW}yes{Fore.RESET}' or '{Fore.YELLOW}no{Fore.RESET}'): ").lower()
+            if choice == 'yes':
+                confirmation = input(f"\nAre you sure you want to reset your progress? (Enter '{Fore.YELLOW}yes{Fore.RESET}' or '{Fore.YELLOW}no{Fore.RESET}'): ").lower()
+                if confirmation == 'yes':
+                    delete_player_data(cursor, username)
+                    print("Progress has been reset.\n")
+                    continue
+            else:
+                print("Have a nice day!")
+                exit()
 
     shouldAskForAirport = True
 
@@ -286,9 +309,6 @@ def play_game():
     time.sleep(0.1)
     print(f"You are currently at {current_location_name} ({Fore.YELLOW}{current_location_icao}{Fore.RESET}).")
     time.sleep(0.1)
-
-    # Get total goals count
-    total_goals = len(get_goals(cursor))
 
     while player_data[5] > 0:  # Check flights_remaining
         # Show goals
@@ -379,7 +399,7 @@ def play_game():
 
                 # Check if all goals are completed
                 if all_goals_completed(player_data, total_goals):
-                    print("Congratulations! You've completed all the goals and won the game! You have earned a platinum reward!")
+                    print(f"Congratulations! You've completed all the goals and won the game! You have earned a {Fore.GREEN}platinum{Fore.RESET} reward!")
                     break  # End the game if all goals are completed
 
             except ValueError:
