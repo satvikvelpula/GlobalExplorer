@@ -1,6 +1,10 @@
 from geopy import distance
+from colorama import Fore, init
 import mysql.connector
 import json
+import time
+
+init(autoreset=True)
 
 # Database connection
 def connect_to_database():
@@ -101,6 +105,12 @@ def get_player_data(cursor, username):
     cursor.execute(query, (username,))
     return cursor.fetchone()
 
+# Function to delete player data
+def delete_player_data(cursor, username):
+    query = f"DELETE FROM player WHERE username = %s"
+    cursor.execute(query, (username,))
+    return cursor.fetchone()
+
 # Function to update player data with goals tracking
 def track_goals(player_data, chosen_country, chosen_continent):
     updated_goals = json.loads(player_data[2])  # completed_goals
@@ -163,12 +173,33 @@ def display_status(player_data):
     visited_airports = json.loads(player_data[3])
     continents_visited = json.loads(player_data[4])
 
-    print(f"Player Status:")
-    print(f"Username: {player_data[1]}")
-    print(f"Countries visited: {', '.join(visited_airports)}")
-    print(f"Continents visited: {', '.join(set(continents_visited))}")
-    print(f"Completed goals: {', '.join(completed_goals)}")
-    print(f"Flights remaining: {player_data[5]}")
+    time.sleep(0.25)
+    print(f"\nPlayer Status:")
+    print(f"Username: {Fore.GREEN}{player_data[1]}{Fore.RESET}")
+    time.sleep(0.25)
+
+    if visited_airports:
+        print(f"Countries visited: {Fore.GREEN}{', '.join(visited_airports)}")
+    else:
+        print(f"Countries visited: {Fore.RED}(No countries visited)")
+
+    time.sleep(0.25)
+
+    if continents_visited:
+        print(f"Continents visited: {Fore.GREEN}{', '.join(set(continents_visited))}")
+    else:
+        print(f"Continents visited: {Fore.RED}(No continents visited)")
+
+    time.sleep(0.25)
+
+    if completed_goals:
+        print(f"Completed goals: {Fore.GREEN}{', '.join(completed_goals)}")
+    else:
+        print(f"Completed goals: {Fore.RED}(No completed goals)")
+
+    time.sleep(0.25)
+
+    print(f"Flights remaining: {Fore.GREEN}{player_data[5]}{Fore.RESET}")
 
 # Function to check if all goals are completed
 def all_goals_completed(player_data, total_goals):
@@ -182,39 +213,79 @@ def get_last_visited_airport(cursor, username):
     result = cursor.fetchone()
     return result[0] if result else None
 
-
 # Main game logic
 def play_game():
     global cursor
     conn = connect_to_database()
     cursor = conn.cursor()
 
-    username = input("Enter your username: ")
+    shouldAskForUsername = True
 
-    # Check if player already exists
-    player_data = get_player_data(cursor, username)
-    if player_data is None:
-        # Initialize player data if new player
-        initialize_player(cursor, username)
+    # Manage player account and handle reset or continuation
+    while shouldAskForUsername:
+        username = input("Enter your username: ")
+
         player_data = get_player_data(cursor, username)
-        icao = input("Give ICAO code (e.g., EFHK for Helsinki Vantaa): ").upper()
-    else:
-        print(f"Welcome back, {username}! Resuming your game...")
-        icao = get_last_visited_airport(cursor, username) or input("Give ICAO code (e.g., EFHK for Helsinki Vantaa): ").upper()
 
-    # Fetch the airport using the ICAO code
-    cursor.execute("SELECT ident, name FROM airport WHERE ident = %s", (icao,))
-    start_airport = cursor.fetchone()
+        if player_data is None:
+            # Initialize player if new
+            initialize_player(cursor, username)
+            player_data = get_player_data(cursor, username)
+            time.sleep(0.5)
+            print(f"\nWelcome {Fore.GREEN}{username}{Fore.RESET}! Starting a new game...")
+            time.sleep(0.5)
+            shouldAskForUsername = False
+        else:
+            print(f"\nWelcome back, {Fore.GREEN}{username}{Fore.RESET}!")
+            time.sleep(0.5)
 
-    if not start_airport:
-        print(f"Airport with ICAO code {icao} not found.")
-        return
+            shouldPromptForAction = True
+
+            while shouldPromptForAction:
+                choice = input(f"\nDo you want to reset your progress or continue? (Enter '{Fore.YELLOW}reset{Fore.RESET}' or '{Fore.YELLOW}continue{Fore.RESET}'): ").lower()
+
+                if choice == 'reset':
+                    confirmation = input(f"Are you sure you want to reset your progress? ({Fore.YELLOW}yes{Fore.RESET}/{Fore.YELLOW}no{Fore.RESET}): ").lower()
+                    if confirmation == 'yes':
+                        delete_player_data(cursor, username)
+                        print("Progress has been reset. Please enter a username.\n")
+                        shouldAskForUsername = True  # Go back to ask for the new username if reset
+                        shouldPromptForAction = False  # Exit inner loop
+                    else:
+                        print("Reset cancelled.")
+                        continue  # Go back to ask if they want to reset or continue
+                elif choice == 'continue':
+                    print("Resuming your game...")
+                    time.sleep(0.5)
+                    shouldAskForUsername = False
+                    shouldPromptForAction = False
+                else:
+                    print("Invalid choice. Please enter 'reset' or 'continue'.")
+
+    shouldAskForAirport = True
+
+    while shouldAskForAirport:
+        icao = get_last_visited_airport(cursor, username) or input(f"\nGive ICAO code (e.g., {Fore.YELLOW}EFHK{Fore.RESET} for Helsinki Vantaa): ").upper()
+
+        # Fetch the airport using the ICAO code
+        cursor.execute("SELECT ident, name FROM airport WHERE ident = %s", (icao,))
+        start_airport = cursor.fetchone()
+
+        print(start_airport)
+
+        if not start_airport:
+            print(f"Airport with ICAO code {Fore.RED}{icao}{Fore.RESET} not found.")
+            time.sleep(0.5)
+        else:
+            shouldAskForAirport = False
 
     current_location_icao = start_airport[0]
     current_location_name = start_airport[1]
 
     print(f"Welcome to Airport Explorer: Global Challenge!\n")
-    print(f"You are currently at {current_location_name} ({current_location_icao}).")
+    time.sleep(0.1)
+    print(f"You are currently at {current_location_name} ({Fore.YELLOW}{current_location_icao}{Fore.RESET}).")
+    time.sleep(0.1)
 
     # Get total goals count
     total_goals = len(get_goals(cursor))
@@ -222,10 +293,10 @@ def play_game():
     while player_data[5] > 0:  # Check flights_remaining
         # Show goals
         goals = get_goals(cursor)
-        print("Goals:")
+        print("\nGoals:")
         for goal in goals:
             if goal[0] not in json.loads(player_data[2]):  # Check completed goals
-                print(f"- {goal[1]}: {goal[2]}")
+                print(f"- {Fore.GREEN}{goal[1]}: {goal[2]}")
 
         # Display nearby countries
         print("\nNearby Countries:")
@@ -235,12 +306,12 @@ def play_game():
             continue  # Exit loop if no nearby countries are found
 
         for idx, (country, (distance, continent)) in enumerate(nearby_countries):
-            print(f"{idx + 1}. {country} ({continent}) - Distance: {distance:.2f} km")
+            print(f"{idx + 1}. {country} ({Fore.YELLOW}{continent}{Fore.RESET}) - Distance: {distance:.2f} km")
             if idx == 9:
                 break
 
         # User selects the country to fly to
-        country_choice = input("\nChoose a country number to fly to or type 'status' to see your status: ")
+        country_choice = input(f"\nChoose a country number to fly to or type '{Fore.YELLOW}status{Fore.RESET}' to see your status: ")
 
         if country_choice.lower() == "status":
             display_status(player_data)
@@ -249,22 +320,25 @@ def play_game():
         try:
             country_choice = int(country_choice) - 1
             if country_choice < 0 or country_choice >= 10:
-                print("Invalid country choice. The number is not on the list. Please try again.")
+                print(f"{Fore.RED}Invalid country choice. The number is not on the list. Please try again.{Fore.RESET}")
+                time.sleep(1)
                 continue  # Prompt user again to make a valid selection
 
             chosen_country = nearby_countries[country_choice][0]
             chosen_continent = nearby_countries[country_choice][1][1]
 
             # Show airports in the chosen country
-            print(f"\nAirports in {chosen_country}:")
+            print(f"\nAirports in {Fore.GREEN}{chosen_country}{Fore.RESET}:")
             airports = get_airports_in_country(cursor, chosen_country)
 
+            time.sleep(0.5)
+
             if not airports:
-                print(f"No airports found in {chosen_country}.")
+                print(f"No airports found in {Fore.RED}{chosen_country}{Fore.RESET}.")
                 continue
 
             for idx, airport in enumerate(airports):
-                print(f"{idx + 1}. {airport[1]} ({airport[0]})")
+                print(f"{idx + 1}. {airport[1]} ({Fore.YELLOW}{airport[0]}{Fore.RESET})")
 
             # User selects an airport in the chosen country
             airport_choice = input("\nChoose an airport number to fly to: ")
@@ -272,12 +346,13 @@ def play_game():
             try:
                 airport_choice = int(airport_choice) - 1
                 if airport_choice < 0 or airport_choice >= len(airports):
-                    print("Invalid airport choice. The number is not on the list. Please try again.")
+                    print(f"{Fore.RED}Invalid airport choice. The number is not on the list. Please try again.{Fore.RESET}")
+                    time.sleep(1)
                     continue
 
                 # Fly to the selected airport
                 chosen_airport = airports[airport_choice]
-                print(f"Flying to {chosen_airport[1]} ({chosen_airport[0]}).")
+                print(f"\nFlying to {chosen_airport[1]} ({Fore.YELLOW}{chosen_airport[0]}{Fore.RESET}).")
 
                 # Update player data and goals
                 player_updates = track_goals(player_data, chosen_country, chosen_continent)
@@ -315,9 +390,6 @@ def play_game():
 
     if player_data[5] == 0:
         print("Game Over! You've run out of flights.")
-
-
-
 
 if __name__ == "__main__":
     play_game()
