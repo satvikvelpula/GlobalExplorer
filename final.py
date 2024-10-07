@@ -6,16 +6,18 @@ import time
 
 init(autoreset=True)
 
+
 # Database connection
 def connect_to_database():
     return mysql.connector.connect(
         host="127.0.0.1",
         port=3306,
-        database="", # database here (assumed flight_game)
-        user="", # user here
-        password="", # password here
+        database="flight_game",  # database here (assumed flight_game)
+        user="satvik",  # user here
+        password="Satvik123!&@",  # password here
         autocommit=True
     )
+
 
 # Function to get the latitude and longitude of an airport by ICAO code
 def a_b_distance(cursor, icao):
@@ -28,6 +30,7 @@ def a_b_distance(cursor, icao):
     else:
         return None
 
+
 # Function to get the country name and continent code by ICAO code
 def get_country_and_continent(cursor, icao):
     sql = """
@@ -39,6 +42,7 @@ def get_country_and_continent(cursor, icao):
     cursor.execute(sql, (icao,))
     result = cursor.fetchone()
     return result if result else (None, None)
+
 
 # Function to get the nearby countries based on the current airport's location
 def get_nearby_countries(cursor, current_location_icao):
@@ -72,6 +76,7 @@ def get_nearby_countries(cursor, current_location_icao):
     sorted_countries = sorted(country_distances.items(), key=lambda x: x[1][0])
     return sorted_countries  # Return sorted countries by distance
 
+
 # Function to get airports within a selected country, limiting to large/medium airports
 def get_airports_in_country(cursor, country_name):
     query = """
@@ -85,11 +90,13 @@ def get_airports_in_country(cursor, country_name):
     cursor.execute(query, (country_name,))
     return cursor.fetchall()
 
+
 # Function to get goals
 def get_goals(cursor):
     query = "SELECT id, name, description FROM goal"
     cursor.execute(query)
     return cursor.fetchall()
+
 
 # Function to initialize player data
 def initialize_player(cursor, username):
@@ -99,17 +106,20 @@ def initialize_player(cursor, username):
     """
     cursor.execute(query, (username,))
 
+
 # Function to get player data
 def get_player_data(cursor, username):
     query = "SELECT * FROM player WHERE username = %s"
     cursor.execute(query, (username,))
     return cursor.fetchone()
 
+
 # Function to delete player data
 def delete_player_data(cursor, username):
-    query = f"DELETE FROM player WHERE username = %s"
+    query = f"UPDATE player SET completed_goals = '[]', visited_airports = '[]', continents_visited = '[]', flights_remaining = 30, last_airport = NULL WHERE username = %s"
     cursor.execute(query, (username,))
     return cursor.fetchone()
+
 
 # Function to update player data with goals tracking
 def track_goals(player_data, chosen_country, chosen_continent):
@@ -160,6 +170,7 @@ def track_goals(player_data, chosen_country, chosen_continent):
         'flights_remaining': flights_remaining - 1,
     }
 
+
 # Function to count completed goals and the rewards
 def count_completed_goals(player_data):
     completed_goals = json.loads(player_data[2])  # Fetch completed goals from player data
@@ -173,14 +184,16 @@ def get_country_continent(cursor, country_name):
     result = cursor.fetchone()
     return result[0] if result else None
 
+
 # Medal mapping based on the number of completed goals
 MEDAL_MAPPING = {
-    0: "No rewards",
-    1: "Bronze",
-    2: "Silver",
-    3: "Gold",
-    4: "Platinum",
+    0: f"{Fore.RED}(No rewards)",  # Red for no rewards
+    1: f"{Fore.YELLOW}Bronze{Fore.RESET}",  # Yellow for Bronze
+    2: f"{Fore.LIGHTWHITE_EX}Silver{Fore.RESET}",  # Light white (bright grey) for Silver
+    3: f"{Fore.LIGHTYELLOW_EX}Gold{Fore.RESET}",  # Light yellow for Gold
+    4: f"{Fore.LIGHTCYAN_EX}Platinum{Fore.RESET}",  # Light cyan for Platinum
 }
+
 
 # Function to display player status
 def display_status(player_data):
@@ -230,12 +243,14 @@ def all_goals_completed(player_data, total_goals):
     completed_goals = json.loads(player_data[2])  # Get completed goals
     return len(completed_goals) == total_goals  # Check if completed goals match total goals
 
+
 # Function to get the last visited airport ICAO code
 def get_last_visited_airport(cursor, username):
     query = "SELECT last_airport FROM player WHERE username = %s"
     cursor.execute(query, (username,))
     result = cursor.fetchone()
     return result[0] if result else None
+
 
 # Main game logic
 def play_game():
@@ -247,17 +262,20 @@ def play_game():
     total_goals = len(get_goals(cursor))
 
     shouldAskForUsername = True
+    shouldPromptForAction = False
     print(f"""{Fore.BLUE}
-Welcome to the Global Explorer Game! 
+Welcome to the Global Explorer Game!
 
-In this exciting educational challenge, your mission is to explore the world by traveling between different countries and airports.
-You'll have a limited number of moves to complete a series of goals revealed once you choose your starting airport. 
-Test your geographical knowledge, improve your critical thinking skills, 
-and discover the world as you navigate through airports to complete your objectives. 
-Remember, the starting airport is crucial, so choose wisely!
+In this exciting educational challenge, your mission is to explore the world by traveling between different countries and airports. 
+You'll have a limited number of moves to complete a series of goals. 
+Test your geographical knowledge, improve your critical thinking skills, and discover the world as you navigate through airports 
+to complete your objectives. Remember, the starting airport is crucial, so choose wisely!
+
+Your goals are to visit at least 3 different countries in Europe, travel to at least 3 different countries in Asia, 
+fly to airports in at least 4 different continents, and complete a world tour by visiting airports on each continent.
 
 Good luck on your global adventure!
-    """)
+        """)
 
     # Manage player account and handle reset or continuation
     while shouldAskForUsername:
@@ -281,15 +299,21 @@ Good luck on your global adventure!
         elif player_data and not all_goals_completed(player_data, total_goals):
             print(f"\nWelcome back, {Fore.GREEN}{username}{Fore.RESET}!")
             time.sleep(0.5)
+            display_status(player_data)
 
-            shouldPromptForAction = True
+            if get_last_visited_airport(cursor, username):
+                shouldPromptForAction = True
+            else:
+                shouldAskForUsername = False
 
             while shouldPromptForAction:
-                choice = input(f"\nDo you want to reset your progress or continue? (Enter '{Fore.YELLOW}reset{Fore.RESET}' or '{Fore.YELLOW}continue{Fore.RESET}'): ").lower()
+                choice = input(
+                    f"\nDo you want to reset your progress or continue? (Enter '{Fore.YELLOW}reset{Fore.RESET}' or '{Fore.YELLOW}continue{Fore.RESET}'): ").lower()
 
                 if not all_goals_completed(player_data, total_goals):
                     if choice == 'reset':
-                        confirmation = input(f"Are you sure you want to reset your progress? ({Fore.YELLOW}yes{Fore.RESET}/{Fore.YELLOW}no{Fore.RESET}): ").lower()
+                        confirmation = input(
+                            f"Are you sure you want to reset your progress? ({Fore.YELLOW}yes{Fore.RESET}/{Fore.YELLOW}no{Fore.RESET}): ").lower()
                         if confirmation == 'yes':
                             delete_player_data(cursor, username)
                             print("Progress has been reset. Please enter a username.\n")
@@ -307,9 +331,11 @@ Good luck on your global adventure!
                         print("Invalid choice. Please enter 'reset' or 'continue'.")
         else:
             print("You have already won the game!")
-            choice = input(f"\nDo you want to reset your progress (Enter '{Fore.YELLOW}yes{Fore.RESET}' or '{Fore.YELLOW}no{Fore.RESET}'): ").lower()
+            choice = input(
+                f"\nDo you want to reset your progress (Enter '{Fore.YELLOW}yes{Fore.RESET}' or '{Fore.YELLOW}no{Fore.RESET}'): ").lower()
             if choice == 'yes':
-                confirmation = input(f"\nAre you sure you want to reset your progress? (Enter '{Fore.YELLOW}yes{Fore.RESET}' or '{Fore.YELLOW}no{Fore.RESET}'): ").lower()
+                confirmation = input(
+                    f"\nAre you sure you want to reset your progress? (Enter '{Fore.YELLOW}yes{Fore.RESET}' or '{Fore.YELLOW}no{Fore.RESET}'): ").lower()
                 if confirmation == 'yes':
                     delete_player_data(cursor, username)
                     print("Progress has been reset.\n")
@@ -319,15 +345,13 @@ Good luck on your global adventure!
                 exit()
 
     shouldAskForAirport = True
-
     while shouldAskForAirport:
-        icao = get_last_visited_airport(cursor, username) or input(f"\nEnter your starting airport (e.g. {Fore.YELLOW}EFHK{Fore.RESET} for Helsinki-Vantaa Airport): ").upper()
+        icao = get_last_visited_airport(cursor, username) or input(
+            f"\nEnter your starting airport (e.g. {Fore.YELLOW}EFHK{Fore.RESET} for Helsinki-Vantaa Airport): ").upper()
 
         # Fetch the airport using the ICAO code
         cursor.execute("SELECT ident, name FROM airport WHERE ident = %s", (icao,))
         start_airport = cursor.fetchone()
-
-        print(start_airport)
 
         if not start_airport:
             print(f"Airport with ICAO code {Fore.RED}{icao}{Fore.RESET} not found.")
@@ -350,14 +374,13 @@ Good luck on your global adventure!
         # Load completed goals as a list
         goals_2 = json.loads(player_data[2])
 
-        print("\nGoals:")
+        print("\nYour Goals:")
 
         for goal in goals:
             if goal[1] in goals_2:  # Check if the goal is completed
                 print(f"- {Fore.GREEN}{goal[1]}: {goal[2]} (Completed)")  # Mark completed goals in green
             else:
-                print(f"- {Fore.YELLOW}{goal[1]}: {goal[2]}")  # Mark remaining goals in yellow
-
+                print(f"- {Fore.YELLOW}{goal[1]}{Fore.RESET}: {goal[2]}")  # Mark remaining goals in yellow
 
         # Display nearby countries
         print("\nNearby Countries:")
@@ -373,11 +396,16 @@ Good luck on your global adventure!
 
         print(f"Flights remaining: {Fore.GREEN}{player_data[5]}{Fore.RESET}")
         # User selects the country to fly to
-        country_choice = input(f"\nChoose a country number to fly to or type '{Fore.YELLOW}status{Fore.RESET}' to see your status: ")
+        country_choice = input(
+            f"\nChoose a country number to fly to or type '{Fore.YELLOW}status{Fore.RESET}' to see your status or type '{Fore.YELLOW}exit{Fore.RESET}' to exit the game: ")
 
         if country_choice.lower() == "status":
             display_status(player_data)
             continue
+
+        if country_choice.lower() == "exit":
+            print("Exiting the game...")
+            break
 
         try:
             country_choice = int(country_choice) - 1
@@ -408,7 +436,8 @@ Good luck on your global adventure!
             try:
                 airport_choice = int(airport_choice) - 1
                 if airport_choice < 0 or airport_choice >= len(airports):
-                    print(f"{Fore.RED}Invalid airport choice. The number is not on the list. Please try again.{Fore.RESET}")
+                    print(
+                        f"{Fore.RED}Invalid airport choice. The number is not on the list. Please try again.{Fore.RESET}")
                     time.sleep(1)
                     continue
 
@@ -441,7 +470,8 @@ Good luck on your global adventure!
 
                 # Check if all goals are completed
                 if all_goals_completed(player_data, total_goals):
-                    print(f"{Fore.GREEN}Congratulations! You've completed all the goals and won the game! You have earned a {Fore.WHITE}platinum{Fore.RESET} {Fore.GREEN}reward!")
+                    print(
+                        f"{Fore.GREEN}Congratulations! You've completed all the goals and won the game! You have earned a {Fore.LIGHTCYAN_EX}Platinum{Fore.RESET} {Fore.GREEN}reward!")
                     display_status(player_data)  # Show the final status
                     break  # End the game if all goals are completed
 
@@ -454,6 +484,7 @@ Good luck on your global adventure!
     if player_data[5] == 0:
         print(f"{Fore.RED}Game Over! You've run out of flights.")
         display_status(player_data)  # Show the final status
+
 
 if __name__ == "__main__":
     play_game()
