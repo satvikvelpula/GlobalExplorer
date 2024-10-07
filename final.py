@@ -12,9 +12,9 @@ def connect_to_database():
     return mysql.connector.connect(
         host="127.0.0.1",
         port=3306,
-        database="flight_game",  # database here (assumed flight_game)
-        user="satvik",  # user here
-        password="Satvik123!&@",  # password here
+        database="",  # database here (assumed flight_game)
+        user="",  # user here
+        password="",  # password here
         autocommit=True
     )
 
