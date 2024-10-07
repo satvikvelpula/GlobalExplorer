@@ -12,8 +12,8 @@ def connect_to_database():
     return mysql.connector.connect(
         host="127.0.0.1",
         port=3306,
-        database="",  # database here (assumed flight_game)
-        user="",  # user here
+        database="",  # database name here
+        user="",  # user here # (this is crucial, add this line in your terminal: GRANT SELECT, INSERT, UPDATE ON databasename.* TO username@localhost;
         password="",  # password here
         autocommit=True
     )
