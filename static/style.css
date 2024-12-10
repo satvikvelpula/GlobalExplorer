@@ -1,0 +1,867 @@
+
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap");
+
+* {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+}
+
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #2b2b42;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #555;
+    border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+body {
+    overflow-x: hidden;
+    overflow-y: visible;
+    background: #1a1a2e; /* A dark, subtle background */
+    color: #e0e0e0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 12px 0;
+    color: #f5f5f5;
+    text-shadow: 0px 0px 3px rgba(0, 0, 0, 0.5);
+}
+
+hr {
+    height: 1px;
+    border: 1px solid #333;
+}
+
+.side-buttons {
+    border: 1px solid #444;
+    /* padding: 4px; */
+    padding: 10px 15px;
+    border-radius: 8px; /* Rounded corners for a clean look */
+    background: #232347;
+    color: #ffffff;
+    cursor: pointer; /* Pointer cursor for interactivity */
+    transition: 0.3s ease-in-out; /* Smooth hover and transition effects */
+    margin: 10px; /* Add spacing between buttons */
+    font-size: 14px; /* Standard font size */
+    font-weight: bold;
+    text-align: center; /* Center the text inside the button */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4); /* Subtle shadow for depth */
+}
+
+.side-buttons span {
+    color: #b9f2ff;
+    transition: 0.3s ease-in-out;
+}
+
+.side-buttons:hover span {
+    color: black;
+    transition: 0.3s ease-in-out;
+}
+
+/* Hover Effect for Side Buttons */
+.side-buttons:hover {
+    background: #ffd700;
+    color: #232347;
+    transform: scale(1.025); /* Slight zoom effect */
+    border-color: #ffd700;
+    box-shadow: 0 6px 10px rgba(255, 215, 0, 0.6); /* Stronger shadow on hover */
+}
+
+.navbar {
+    height: 70px;
+    background: #1f1f3d;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.4);
+    border-bottom: 2px solid #444;
+}
+
+.game {
+    /* width: 100%; */
+    height: 100vh;
+    margin-right: 70px; /* For only side bar */
+}
+
+.game-container {
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    padding: 10px;
+    background: rgba(20, 20, 40, 0.8);
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+.game-map-container {
+    width: 60%;
+    background: #232347;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
+}
+
+.game-map {
+    padding: 12px;
+    height: 100%;
+    /* background: #1a1a2e; */ /* Matches body background */
+    border: 1px solid #444;
+    border-radius: 6px;
+}
+
+.game-map-container.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: calc(100% - 70px); /* Subtract the sidebar width */
+    height: 100%;
+    z-index: 9999; /* Ensure it's on top */
+    /* background-color: rgba(0, 0, 0); */ /* Optional: dark background for fullscreen */
+    /* background: #1f1f3d; */
+}
+
+.game-map.fullscreen {
+    height: 100%;
+    width: 100%;
+}
+
+#closeFullscreenBtn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 18px;
+    color: black;
+    cursor: pointer;
+    z-index: 10000; /* Make sure it's above other elements */
+    display: none;
+}
+
+/* Optional: Close button hover effect */
+#closeFullscreenBtn:hover {
+    color: #ff0000;
+}
+.current_airport{
+    display: none;
+}
+#flights_remaining,
+.current_airport {
+    display: inline-block;
+    margin-bottom: 0;
+    margin-right: 10px; /* Optional: Adds space between the elements */
+    font-weight: bold;
+    font-size: 16px;
+    color: #ffd700; /* Gold for emphasis */
+}
+
+.airport-container {
+    width: 40%;
+    display: flex;
+    flex-direction: column;
+    background: #232347;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.airport-container div {
+    padding: 1rem;
+    color: #e0e0e0;
+}
+
+.nearby-countries {
+    height: 100%;
+    overflow: auto;
+    background: #1f1f3d;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+/* Webkit-based scrollbar styling (Chrome, Safari, Edge) */
+.nearby-countries::-webkit-scrollbar {
+    width: 8px; /* Thin scrollbar */
+    height: 8px; /* Thin horizontal scrollbar */
+}
+
+.nearby-countries::-webkit-scrollbar-track {
+    background: #2b2b42; /* Light background for track */
+    border-radius: 10px; /* Rounded track */
+}
+
+.nearby-countries::-webkit-scrollbar-thumb {
+    background: #555; /* Default thumb color */
+    border-radius: 10px; /* Rounded corners for thumb */
+}
+
+.nearby-countries::-webkit-scrollbar-thumb:hover {
+    background: #666; /* Darker thumb color on hover */
+}
+
+#dynamic-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    /*min-width: 300px;
+    max-width: 500px;*/
+    transition: all 0.3s ease-in-out;
+}
+
+.side-bar {
+    width: 70px;
+    height: 100%;
+    background: #1f1f3d;
+    position: fixed;
+    right: 0;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 1px solid #444;
+    box-shadow: -4px 0 6px rgba(0, 0, 0, 0.6);
+}
+
+.side-bar i {
+    font-size: 24px;
+    margin: 20px 0;
+    color: white;
+    transition: 0.3s;
+}
+
+.side-bar i:hover {
+    color: #ffd700; /* Gold on hover */
+    transform: scale(1.2);
+}
+
+.side-bar-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.travel-button {
+    background: #4e4e75;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.travel-button:hover {
+    background: #6b6b9f;
+    transform: scale(1.1);
+}
+
+.reset-button {
+    background: #b02a37;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.reset-button:hover {
+    background: #d13b49;
+    transform: scale(1.1);
+}
+
+#statusBtn, #goalsBtn, #instructionBtn{
+    cursor: pointer;
+}
+.fa {
+font-size: 12px;
+}
+
+.statusmodal, .goalsmodal, .overmodal {
+    display: none;
+    position: fixed;
+    z-index: 10000000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0, 0, 0);
+    background-color: rgba(0, 0, 0, 0.4);
+    padding-top: 60px;
+}
+
+/* Modal Content */
+.status-modal-content, .goals-modal-content, .instruction-modal-content, .over-modal-content {
+    background-color: #232347;
+    color: #e0e0e0;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #444;
+    border-radius: 15px;
+    width: 40%; /* Default width for small screens */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
+    z-index: 10000; /* On top of other content */
+}
+
+/* Modal Background */
+.statusmodal, .goalsmodal, .instructionmodal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 9999; /* Below modal content */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background: rgba(0, 0, 0, 0.8); /* Dimmed background */
+    backdrop-filter: blur(8px); /* Blur effect */
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+
+
+
+/* Modal Headings */
+.status-modal-content h2, .goals-modal-content h2, .instruction-modal-content h2 {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffd700; /* Gold for headings */
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.3); /* Glow effect */
+    margin-bottom: 15px;
+}
+
+/* List Items */
+.status-modal-content li, .goals-modal-content li, .instruction-modal-content li {
+    list-style: none;
+    padding: 10px 0;
+    font-size: 16px;
+    color: #dcdcdc; /* Slightly lighter gray text for readability */
+}
+
+.status-modal-content li:last-child,
+.goals-modal-content li:last-child,
+.instruction-modal-content li:last-child {
+    border-bottom: none;
+}
+
+/* List Highlights */
+.status-modal-content span, .goals-modal-content span, .instruction-modal-content span {
+    font-weight: bold;
+    color: #ffd700; /* Highlights key parts in gold */
+}
+
+/* Close Buttons */
+.status-close, .goals-close, .instruction-close {
+    color: #fff;
+    float: right;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.status-close:hover, .goals-close:hover, .instruction-close:hover {
+    color: #ffd700; /* Gold on hover for close button */
+}
+
+/* Responsive Design for Modals */
+@media (max-width: 768px) {
+    .status-modal-content, .goals-modal-content, .instruction-modal-content {
+        width: 90%; /* Take up more width on small screens */
+        max-width: none; /* Remove max-width restriction */
+        max-height: 90vh; /* Ensure it fits smaller screens */
+        padding: 15px; /* Reduce padding for smaller devices */
+    }
+}
+
+.instruction-list{
+    list-style: none;
+}
+.important {
+    font-weight: bold;
+    color: #ff5733; /* Red color for important text */
+}
+.red-text {
+    color: red;
+}
+.purple-text {
+    color: purple;
+}
+
+/* Placeholder for Images */
+.image-placeholder {
+    width: 100%;
+    height: 300px;
+    background-color: #2f2f4f; /* Slightly darker placeholder */
+    margin-bottom: 20px;
+    text-align: center;
+    line-height: 300px;
+    color: #dcdcdc;
+}
+
+/* The Close Button */
+.status-close, .goals-close, .instruction-close {
+  color: #aaaaaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.status-close:hover,
+.status-close:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+.goals-close:hover,
+.goals-close:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.instruction-close:hover,
+.instruction-close:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.travel-button {
+    background-color: #4e4e75;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    padding: 6px 15px;
+    font-size: 18px;
+    text-align: center;
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 16px;
+    margin: 4px auto 2px auto;
+    cursor: pointer;
+    display: block;
+    margin: 20px auto;
+    transition: 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+}
+
+.travel-button:hover {
+    background: #6b6b9f;
+    transform: scale(1.1);
+}
+
+/* Button Styling */
+.find-nearby-button {
+    background-color: #232347;
+    color: #e0e0e0;
+    border: 1px solid #444;
+    border-radius: 12px; /* Rounded corners for a clean look */
+    padding: 10px 20px; /* Add spacing inside the button */
+    font-size: 14px; /* Standard font size */
+    font-weight: bold; /* Bold text for emphasis */
+    cursor: pointer; /* Pointer cursor for interactivity */
+    text-align: center; /* Center-align text */
+    transition: 0.3s ease-in-out; /* Smooth hover effects */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Button Hover Effect */
+.find-nearby-button:hover {
+    background-color: #ffd700; /* Gold background on hover */
+    color: #232347; /* Dark blue text for contrast */
+    transform: scale(1.05); /* Slight zoom effect */
+    border-color: #ffd700; /* Gold border on hover */
+    box-shadow: 0 6px 10px rgba(255, 215, 0, 0.6); /* Stronger shadow */
+}
+
+.reset-button {
+    background: linear-gradient(90deg, #b02a37, #a1222e);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    display: block;
+    margin: 20px auto;
+    transition: 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+}
+
+.reset-button:hover {
+    background: #d13b49;
+    transform: scale(1.1);
+}
+
+.reset-button-over {
+    background-color: #044caa;
+    border: none;
+    border-radius: 10px;
+    color: white;
+    padding: 6px 15px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 14px;
+    margin: 4px auto 2px auto;
+    cursor: pointer;
+    display: block;
+    margin-top: 40px;
+}
+.reset-button-over:hover {
+    background-color: #090178;
+}
+
+/* Text Input Styling */
+input[type="text"], textarea {
+    width: 90%;
+    padding: 10px;
+    margin: 10px auto;
+    border: 1px solid #555;
+    border-radius: 8px;
+    background: #1f1f3d;
+    color: #e0e0e0;
+    font-size: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+input[type="text"]:focus, textarea:focus {
+    border-color: #ffd700;
+    outline: none;
+    box-shadow: 0 4px 8px rgba(255, 215, 0, 0.4);
+}
+
+/* Responsive Design for Modals */
+@media only screen and (max-width: 768px) {
+    .status-modal-content, .goals-modal-content, .instruction-modal-content {
+        width: 90%;
+        padding: 15px;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+
+    li {
+        font-size: 14px;
+    }
+}
+
+@media only screen and (max-width: 784px) {
+    .side-bar-buttons {
+        flex-direction: row;
+        margin-bottom: 0;
+    }
+
+    .game {
+        height: auto;
+        margin-right: 0;
+    }
+
+    .game-container {
+        height: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: start;
+    }
+
+    .side-bar {
+        position: sticky;
+        width: 100%;
+        height: 70px;
+        flex-direction: row;
+        z-index: +2000;
+    }
+
+    .side-bar-buttons i {
+        font-size: 17px;
+    }
+
+    .side-bar i {
+        margin: 0 16px;
+    }
+
+    .game-map-container {
+        padding: 8px;
+        width: 100%;
+        height: 600px   ; /* remove this height after there is an actual map */
+    }
+
+    .airport-system h3 {
+        text-align: center;
+        font-size: 3vw;
+    }
+
+    .airport-container {
+        width: 100%;
+    }
+
+    .nearby-countries h4 {
+        text-align: center;
+        font-size: 2.5vw;
+    }
+}
+
+.toast {
+    position: absolute;
+    top: -100px; /* Initially off-screen, adjust to move the toast just out of view */
+    left: 50%; /* Center horizontally */
+    transform: translateX(-50%) translateY(0); /* Center it and position it above the screen */
+    border-radius: 12px;
+    background: #fff;
+    padding: 20px 35px 20px 25px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    border-left: 6px solid #0ABF30;
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.35);
+    visibility: hidden; /* Initially hidden */
+    opacity: 0; /* Initially invisible */
+    z-index: 100000000;
+}
+
+.toast.active {
+    top: 25px; /* When active, move it down to 25px from the top */
+    visibility: visible; /* Make it visible */
+    opacity: 1; /* Fade in */
+    transform: translateX(-50%) translateY(25px); /* Slide down from the top */
+}
+
+.toast .toast-content {
+    display: flex;
+    align-items: center;
+}
+
+.toast-content .check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 35px;
+    width: 35px;
+    background-color: #0ABF30;
+    color: #fff;
+    font-size: 20px;
+    border-radius: 50%;
+}
+
+.toast-content .message {
+    display: flex;
+    flex-direction: column;
+    margin: 0 20px;
+}
+
+.message .text {
+    font-size: 20px;
+    font-weight: 400;
+    color: #666666;
+}
+
+.message .text.text-1 {
+    font-weight: 600;
+    color: #333;
+}
+
+.toast .close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    padding: 5px;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.toast .close:hover {
+    opacity: 1;
+}
+
+.toast .progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    background: #ddd;
+}
+
+.toast .progress:before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    height: 100%;
+    width: 100%;
+    background-color: #0ABF30;
+}
+
+.progress.active:before {
+    animation: progress 5s linear forwards;
+}
+
+@keyframes progress {
+    100% {
+        right: 100%;
+    }
+}
+
+.toast-warning {
+    position: absolute;
+    top: -100px; /* Initially off-screen, adjust to move the toast just out of view */
+    left: 50%; /* Center horizontally */
+    transform: translateX(-50%) translateY(0); /* Center it and position it above the screen */
+    border-radius: 12px;
+    background: #fff;
+    padding: 20px 35px 20px 25px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    border-left: 6px solid #FF9900;
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.35);
+    visibility: hidden; /* Initially hidden */
+    opacity: 0; /* Initially invisible */
+    z-index: 100000000;
+}
+
+.toast-warning.active {
+    top: 25px; /* When active, move it down to 25px from the top */
+    visibility: visible; /* Make it visible */
+    opacity: 1; /* Fade in */
+    transform: translateX(-50%) translateY(25px); /* Slide down from the top */
+}
+
+.toast-warning .toast-content-warning {
+    display: flex;
+    align-items: center;
+}
+
+.toast-content-warning .warning {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 35px;
+    width: 35px;
+    background-color: #FF9900;
+    color: #fff;
+    font-size: 20px;
+    border-radius: 50%;
+}
+
+.toast-content-warning .message {
+    display: flex;
+    flex-direction: column;
+    margin: 0 20px;
+}
+
+.message .text {
+    font-size: 20px;
+    font-weight: 400;
+    color: #666666;
+}
+
+.message .text.text-1 {
+    font-weight: 600;
+    color: #333;
+}
+
+.toast-warning .close-warning {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    padding: 5px;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.toast-warning .close-warning:hover {
+    opacity: 1;
+}
+
+.toast-warning .progress-warning {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    background: #ddd;
+}
+
+.toast-warning .progress-warning:before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    height: 100%;
+    width: 100%;
+    background-color: #FF9900;
+}
+
+.progress-warning.active:before {
+    animation: progress 5s linear forwards;
+}
+
+@keyframes progress-warning {
+    100% {
+        right: 100%;
+    }
+}
+
+.parent-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    flex-direction: column;
+    }
+.wrapper-loading {
+    display: flex;
+    column-gap: 10px;
+    margin-top: -10rem;
+}
+.wrapper-loading .dot {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: #008ae6;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+  animation: animate 1s ease-in-out infinite alternate;
+}
+.dot:nth-child(1) {
+  animation-delay: -0.25s;
+}
+.dot:nth-child(2) {
+  background: #e60000;
+  animation-delay: -0.5s;
+}
+.dot:nth-child(3) {
+  background: #ffcc00;
+  animation-delay: -0.75s;
+}
+.dot:nth-child(4) {
+  background: #008800;
+  animation-delay: -1s;
+}
+@keyframes animate {
+  0% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(5px);
+  }
+}

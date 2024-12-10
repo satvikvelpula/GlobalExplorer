@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://kit.fontawesome.com/2ed076f63b.js" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+    <title>Global Explorer | Home</title>
+</head>
+<body>
+
+
+
+
+    <!-- The Instruction Modal -->
+      <div id="instructionModal" class="instructionmodal">
+        <div class="instruction-modal-content">
+          <span class="instruction-close">&times;</span>
+  <h2>Welcome to <span style="color: #4CAF50;">Global Explorer</span>!</h2>
+    <p>Your mission is to explore the world by traveling between airports and countries. You'll have a limited number of moves, so plan your journey wisely. Your objective is to:</p>
+    <ul class = "instruction-list">
+        <li>Visit <span class="red-text">at least 3 different countries in Europe</span></li>
+        <li>Travel to <span class="red-text">at least 3 different countries in Asia</span></li>
+        <li>Fly to airports in <span class="red-text">at least 4 different continents</span></li>
+        <li>Complete the <span class="red-text">World Tour</span> by visiting airports on <span class="red-text">each continent</span></li>
+    </ul>
+    <p class="important" style="margin-top: 10px">How the game works:</p>
+
+    <h3>1. Starting the Journey:</h3>
+    <p>Begin by entering the <strong>ICAO code</strong> of an airport to kickstart your adventure. Choose wisely, as your starting point is crucial for completing your goals! </p>
+
+    <h3>2. Choosing the Next Destination:</h3>
+    <p>Once you've entered the ICAO code, you can no longer enter any other airport codes directly. Instead, the game will show <span class="red-text">10 nearby countries</span> marked with <span class="red-text">red</span> markers on the map.</p>
+    <p>You can choose a country in two ways:</p>
+    <ul class = "instruction-list">
+        <li><strong>Click on a red marker</strong> on the map to select the country.</li>
+        <li><strong>Use the side menu buttons</strong> to select the country directly.</li>
+    </ul>
+
+    <h3>3. Traveling to a New Country:</h3>
+    <p>After selecting a country, a <strong>set of airports and markers</strong> in that country will appear with the option to fly to an airport of your choice.</p>
+
+    <h3>4. Exploring Airports:</h3>
+    <p>Once you've traveled to a country, the game will list <span class="purple-text">airports</span> within that country, marked with <span class="purple-text">purple</span> markers on the map.</p>
+    <p>You can visit these airports by:</p>
+    <ul class = "instruction-list">
+        <li><strong>Clicking on the side menu button</strong> to visit an airport.</li>
+        <li><strong>Clicking on a purple marker</strong> on the map to travel to the airport.</li>
+    </ul>
+    <p class="important">Important: Visiting a country <span class="red-text">does not</span> reduce your flight moves. However, each time you visit an airport, your remaining flights will decrease, so choose your destinations carefully!</p>
+
+
+    <h3>Ready to take off? ✈️</h3>
+
+        </div>
+      </div>
+
+
+
+   <div class="toast">
+        <div class="toast-content">
+            <i class="fas fa-solid fa-check check"></i>
+            <div class="message">
+                <span class="text text-1">Goal Completed!</span>
+                <span class="text text-2"></span>
+            </div>
+        </div>
+        <i class="fa-solid fa-xmark close"></i>
+        <div class="progress"></div>
+    </div>
+
+    <div class="toast-warning">
+        <div class="toast-content-warning">
+            <i class="fas fa-solid fa-warning warning"></i>
+            <div class="message">
+                <span class="text text-1">Flights remaining!</span>
+                <span class="text text-2">10</span>
+            </div>
+        </div>
+        <i class="fa-solid fa-xmark close-warning"></i>
+        <div class="progress-warning"></div>
+    </div>
+
+    <!-- Side bar starts here -->
+    <div class="side-bar" id="side-bar">
+        <div class="side-bar-buttons">
+            <i class="fa-regular fa-user" id="statusBtn"></i>
+            <i class="fa-solid fa-list-check" id="goalsBtn"></i>
+            <i class="fa-solid fa-expand" id="fullscreenBtn"></i>
+            <i class="fa-solid fa-info-circle" id="instructionBtn"></i>
+            <i class="fas fa-plane-arrival" id="flights_remaining_side"><span class="flights_remaining_side_span" style="font-size: 18px; margin-left: 5px; margin-top: 20px">{{ status.flights_remaining }}</span></i>
+        </div>
+        <div class="side-bar-status">
+       <a href="/"><i class="fa-solid fa-sign-out"></i></a>
+        </div>
+    </div>
+    <!-- Side bar ends here -->
+    {% if new_user %}
+        <script>
+            var instructionmodal = document.getElementById("instructionModal");
+            instructionmodal.style.display = "block";
+        </script>
+    {% endif %}
+    <!-- Game screen starts here -->
+    <div class="game">
+        <div class="game-container">
+            <div class="game-map-container">
+                <i class="fa-solid fa-x" id="closeFullscreenBtn"></i>
+
+                <div class="game-map" id="map"></div>
+            </div>
+            <div class="airport-container">
+                    <div class="airport-system">
+                        <h3 class="current-airport-h3"></h3>
+                        <hr>
+                        <div id = "starting-airport">
+                            <input type="text" id="current-airport-input" placeholder="ICAO" />
+                            <button id="fetch-nearby-countries" class="find-nearby-button">Find Nearby Countries</button>
+                        </div>
+                        <p id="current-airport-display" style="display: none;"></p>
+                    </div>
+                 <div class="nearby-countries" id="dynamic-container">
+                    <!-- Buttons will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+<!-- The Status Modal -->
+<div id="statusModal" class="statusmodal">
+  <div class="status-modal-content">
+    <span class="status-close">&times;</span>
+        <h2>Your Status</h2>
+        <p><strong><i class="fas fa-user" style="margin-right: 10px; margin-top: 10px"></i> Username:</strong> <span class="username">{{username}}</span></p>
+        <p><strong><i class="fas fa-plane" style="margin-right: 10px; margin-top: 10px"></i> Countries visited:</strong> <span class="countries-visited">{{ status.visited_airports | join(", ") if status.visited_airports else "None" }}</span></p>
+      <p><strong><i class="fas fa-globe" style="margin-right: 10px; margin-top: 10px"></i> Continents visited:</strong> <span class="continents-visited">{{ status.continents_visited | join(", ") if status.continents_visited else "None" }}</span></p>
+      <p><strong><i class="fas fa-check-circle" style="margin-right: 10px; margin-top: 10px"></i> Completed goals:</strong> <span class="completed-goals">{{ status.completed_goals | join(", ") if status.completed_goals else "None" }}</span></p>
+        <p class="reward"><strong><i class="fas fa-gift" style="margin-right: 10px; margin-top: 10px"></i> Reward:</strong>
+          {% if status.reward == "Bronze" %}
+            <span style="background-color: #cd7f32; color: white; border-radius: 5px; padding: 2px 5px;">Bronze</span>
+          {% elif status.reward == "Silver" %}
+            <span style="background-color: #c0c0c0; color: black; border-radius: 5px; padding: 2px 5px;">Silver</span>
+          {% elif status.reward == "Gold" %}
+            <span style="background-color: #ffd700; color: black; border-radius: 5px; padding: 2px 5px;">Gold</span>
+          {% elif status.reward == "Platinum" %}
+            <span style="background-color: #b9f2ff; color: black; border-radius: 5px; padding: 2px 5px;">Platinum</span>
+          {% else %}
+            <span style="background-color: #808080; color: white; border-radius: 5px; padding: 2px 5px;">No rewards</span>
+          {% endif %}
+        </p>
+      <p><strong><i class="fas fa-plane-arrival" style="margin-right: 10px; margin-top: 10px"></i> Last airport:</strong> <span class="last-airport">{{ status.last_airport }}</span></p>
+      <p><strong><i class="fas fa-plane-departure" style="margin-right: 10px; margin-top: 10px"></i> Flights remaining:</strong> <span class="flights-remaining">{{ status.flights_remaining }}</span></p>
+      <button class="reset-button">Reset</button>
+  </div>
+</div>
+
+    <script>
+    document.querySelector(".reset-button").addEventListener("click", function() {
+    // Ask for confirmation before proceeding
+    const isConfirmed = confirm("Are you sure you want to reset your progress?");
+
+    if (isConfirmed) {
+        fetch("/reset-progress", {
+            method: "POST", // or 'GET' depending on your use case
+            headers: {
+                "Content-Type": "application/json",
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Progress reset successfully!");
+                location.reload();
+            } else {
+                alert("Failed to reset progress: " + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("An error occurred.");
+        });
+    } else {
+        // If user cancels, just exit
+        console.log("Progress reset canceled.");
+    }
+});
+
+</script>
+
+
+
+<!-- The Goals Modal -->
+<div id="goalsModal" class="goalsmodal">
+  <div class="goals-modal-content">
+    <span class="goals-close">&times;</span>
+    <h2>Goals</h2>
+<ul style="padding-left: 20px;">
+  {% for goal in status.goal_status %}
+    <li style="margin-top: 10px" id="goal-{{ goal.name | replace(' ', '-') }}">
+        <strong>{{ goal.name }}</strong>: {{ goal.description }}
+        <!-- Check goal status and change the span accordingly -->
+        {% if goal.status == "Not completed" %}
+          <span class="goal-status" data-status="Not completed" style="padding: 3px 7px; border-radius: 4px; font-size: 12px; display: inline-flex; align-items: center; background-color: red; color: white; border: 1px solid darkred;">
+            Not Completed <i class="fa fa-times" style="margin-left: 5px;"></i>
+          </span>
+        {% elif goal.status == "Completed" %}
+          <span class="goal-status" data-status="Completed" style="padding: 3px 7px; border-radius: 4px; font-size: 12px; display: inline-flex; align-items: center; background-color: green; color: white; border: 1px solid darkgreen;">
+            Completed <i class="fa fa-check" style="margin-left: 5px;"></i>
+          </span>
+        {% else %}
+          <!-- In case of unknown status -->
+          <span class="goal-status" data-status="Unknown" style="padding: 3px 7px; border-radius: 4px; font-size: 12px; display: inline-flex; align-items: center; background-color: gray; color: white; border: 1px solid darkgray;">
+            Unknown Status <i class="fa fa-question-circle" style="margin-left: 5px;"></i>
+          </span>
+        {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+
+  </div>
+</div>
+
+    <!-- The Game Over Modal -->
+<div id="overmodal" class="overmodal">
+  <div class="over-modal-content">
+    <h2 class="overModal-h2"></h2>
+      <p class="overModal-p"></p>
+
+      <h3 style="margin-top: 10px">Your status:</h3>
+        <p><strong><i class="fas fa-user" style="margin-right: 10px; margin-top: 5px"></i> Username:</strong> <span class="username">{{username}}</span></p>
+        <p><strong><i class="fas fa-plane" style="margin-right: 10px; margin-top: 10px"></i> Countries visited:</strong> <span class="countries-visited-over">{{ status.visited_airports | join(", ") if status.visited_airports else "None" }}</span></p>
+      <p><strong><i class="fas fa-globe" style="margin-right: 10px; margin-top: 10px"></i> Continents visited:</strong> <span class="continents-visited-over">{{ status.continents_visited | join(", ") if status.continents_visited else "None" }}</span></p>
+      <p><strong><i class="fas fa-check-circle" style="margin-right: 10px; margin-top: 10px"></i> Completed goals:</strong> <span class="completed-goals-over">{{ status.completed_goals | join(", ") if status.completed_goals else "None" }}</span></p>
+        <p class="reward-over"><strong><i class="fas fa-gift" style="margin-right: 10px; margin-top: 10px"></i> Reward:</strong>
+          {% if status.reward == "Bronze" %}
+            <span style="background-color: #cd7f32; color: white; border-radius: 5px; padding: 2px 5px;">Bronze</span>
+          {% elif status.reward == "Silver" %}
+            <span style="background-color: #c0c0c0; color: black; border-radius: 5px; padding: 2px 5px;">Silver</span>
+          {% elif status.reward == "Gold" %}
+            <span style="background-color: #ffd700; color: black; border-radius: 5px; padding: 2px 5px;">Gold</span>
+          {% elif status.reward == "Platinum" %}
+            <span style="background-color: #b9f2ff; color: black; border-radius: 5px; padding: 2px 5px;">Platinum</span>
+          {% else %}
+            <span style="background-color: #808080; color: white; border-radius: 5px; padding: 2px 5px;">No rewards</span>
+          {% endif %}
+        </p>
+      <p><strong><i class="fas fa-plane-arrival" style="margin-right: 10px; margin-top: 10px"></i> Last airport:</strong> <span class="last-airport-over">{{ status.last_airport }}</span></p>
+      <p><strong><i class="fas fa-plane-departure" style="margin-right: 10px; margin-top: 10px"></i> Flights remaining:</strong> <span class="flights-remaining-over">{{ status.flights_remaining }}</span></p>
+      <button class="reset-button-over" style="background-color:#1a1afa">New Game</button>
+  </div>
+</div>
+
+
+    <script>
+    document.querySelector(".reset-button-over").addEventListener("click", function() {
+    // Ask for confirmation before proceeding
+    const isConfirmed = confirm("Are you sure you want to reset your progress?");
+
+    if (isConfirmed) {
+        fetch("/reset-progress", {
+            method: "POST", // or 'GET' depending on your use case
+            headers: {
+                "Content-Type": "application/json",
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Progress reset successfully!");
+                location.reload();
+            } else {
+                alert("Failed to reset progress: " + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("An error occurred.");
+        });
+    } else {
+        // If user cancels, just exit
+        console.log("Progress reset canceled.");
+    }
+});
+
+</script>
+
+<script>
+var statusmodal = document.getElementById("statusModal");
+var goalsmodal = document.getElementById("goalsModal");
+var instructionmodal = document.getElementById("instructionModal");
+
+var statusbtn = document.getElementById("statusBtn");
+var goalsbtn = document.getElementById("goalsBtn");
+var instructionbtn = document.getElementById("instructionBtn");
+
+var statusspan = document.getElementsByClassName("status-close")[0];
+var goalsspan = document.getElementsByClassName("goals-close")[0];
+var instructionspan = document.getElementsByClassName("instruction-close")[0];
+
+statusbtn.onclick = function() {
+  statusmodal.style.display = "block";
+}
+goalsbtn.onclick = function() {
+  goalsmodal.style.display = "block";
+}
+instructionbtn.onclick = function() {
+  instructionmodal.style.display = "block";
+}
+
+statusspan.onclick = function() {
+  statusmodal.style.display = "none";
+}
+goalsspan.onclick = function() {
+  goalsmodal.style.display = "none";
+}
+instructionspan.onclick = function() {
+  instructionmodal.style.display = "none";
+}
+
+window.onclick = function(event) {
+    if (event.target == statusmodal) {
+        statusmodal.style.display = "none";
+    }
+    if (event.target == goalsmodal) {
+        goalsmodal.style.display = "none";
+    }
+    if (event.target == instructionmodal) {
+        instructionmodal.style.display = "none";
+    }
+};
+
+</script>
+
+</body>
+
+
+
+
+</html>
